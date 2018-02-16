@@ -1,4 +1,4 @@
-# opencl c practice
+# c opencl practice
 
 # Environment
 
