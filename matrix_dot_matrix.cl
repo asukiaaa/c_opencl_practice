@@ -14,5 +14,5 @@ __kernel void matrix_dot_matrix(
     value += elementA * elementB;
   }
 
-  Result[ty * wA + tx] = value;
+  Result[ty * wB + tx] = value;
 }

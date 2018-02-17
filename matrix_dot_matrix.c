@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
@@ -21,10 +22,12 @@ void printMatrix(float* matrix, int w, int h) {
 }
 
 int main() {
+  clock_t start_t, calc_start_t, calc_end_t, end_t;
+
   cl_device_id device_id = NULL;
   cl_context context = NULL;
   cl_command_queue command_queue = NULL;
-  cl_mem matrixAMemObj = NULL, matrixBMemObj = NULL, matrixResultMemObj = NULL;
+  cl_mem matrixAMemObj = NULL, matrixBMemObj = NULL, matrixRMemObj = NULL;
   cl_program program = NULL;
   cl_kernel kernel = NULL;
   cl_platform_id platform_id = NULL;
@@ -32,23 +35,25 @@ int main() {
   cl_uint ret_num_platforms;
   cl_int ret;
 
-  FILE *fp;
-  char fileName[] = "./matrix_dot_matrix.cl";
-  char *source_str;
-  size_t source_size;
-
-  const int wA = 10, wB = 10;
-  //const int wA = 2000, wB = 2000;
-  unsigned int matrixSize = wA * wB;
-  unsigned int matrixMemSize = sizeof(float) * matrixSize;
-  float* matrixA = (float*) malloc(matrixMemSize);
-  float* matrixB = (float*) malloc(matrixMemSize);
-  float* matrixResult = (float*) malloc(matrixMemSize);
+  // const int dimLength = 10;
+  // const int wA = dimLength, hA = dimLength, wB = dimLength;
+  const int wA = 3, hA = 4, wB = 4;
+  int hB = wA, wR = wB, hR = hA;
+  unsigned int matrixAMemSize = sizeof(float) * (unsigned int) (wA * hA);
+  unsigned int matrixBMemSize = sizeof(float) * (unsigned int) (wB * hB);
+  unsigned int matrixRMemSize = sizeof(float) * (unsigned int) (wR * hR);
+  float* matrixA = (float*) malloc(matrixAMemSize);
+  float* matrixB = (float*) malloc(matrixBMemSize);
+  float* matrixR = (float*) malloc(matrixRMemSize);
 
   int i, j;
   for (i = 0; i < wA; i++) {
-    for (j = 0; j < wB; j++) {
+    for (j = 0; j < hA; j++) {
       matrixA[j*wA + i] = 10*i + j;
+    }
+  }
+  for (i = 0; i < wB; i++) {
+    for (j = 0; j < hB; j++) {
       int bValue = 0;
       if (i == j) {
         if (i == 1) {
@@ -57,22 +62,15 @@ int main() {
           bValue = 1;
         }
       }
-      matrixB[i*wB + j] = bValue;
+      matrixB[j*wB + i] = bValue;
     }
   }
 
-  printMatrix(matrixA, wA, wB);
-  printMatrix(matrixB, wB, wA);
-
-  /* Load the source code containing the kernel*/
-  fp = fopen(fileName, "r");
-  if (!fp) {
-    fprintf(stderr, "Failed to load kernel.\n");
-    exit(1);
+  if (wA <= 10) {
+    printMatrix(matrixA, wA, hA);
+    printMatrix(matrixB, wB, hB);
   }
-  source_str = (char*)malloc(MAX_SOURCE_SIZE);
-  source_size = fread(source_str, 1, MAX_SOURCE_SIZE, fp);
-  fclose(fp);
+  start_t = clock();
 
   /* Get Platform and Device Info */
   ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
@@ -82,6 +80,20 @@ int main() {
     return EXIT_FAILURE;
   }
 
+  /* Load the source code containing the kernel*/
+  FILE *fp;
+  char fileName[] = "./matrix_dot_matrix.cl";
+  char *source_str;
+  size_t source_size;
+  fp = fopen(fileName, "r");
+  if (!fp) {
+    fprintf(stderr, "Failed to load kernel.\n");
+    exit(1);
+  }
+  source_str = (char*)malloc(MAX_SOURCE_SIZE);
+  source_size = fread(source_str, 1, MAX_SOURCE_SIZE, fp);
+  fclose(fp);
+
   /* Create OpenCL context */
   context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
 
@@ -89,8 +101,7 @@ int main() {
   command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
 
   /* Create Kernel Program from the source */
-  program = clCreateProgramWithSource(context, 1, (const char **)&source_str,
-                                      (const size_t *)&source_size, &ret);
+  program = clCreateProgramWithSource(context, 1, (const char **)&source_str, (const size_t *)&source_size, &ret);
 
   /* Build Kernel Program */
   ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
@@ -111,10 +122,10 @@ int main() {
   }
 
   /* Create Memory Buffer */
-  matrixAMemObj = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, matrixMemSize, matrixA, &ret);
-  matrixBMemObj = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, matrixMemSize, matrixB, &ret);
-  matrixResultMemObj = clCreateBuffer(context, CL_MEM_READ_WRITE, matrixMemSize, NULL, &ret);
-  if (!matrixAMemObj || !matrixBMemObj || !matrixResultMemObj) {
+  matrixAMemObj = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, matrixAMemSize, matrixA, &ret);
+  matrixBMemObj = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, matrixBMemSize, matrixB, &ret);
+  matrixRMemObj = clCreateBuffer(context, CL_MEM_READ_WRITE, matrixRMemSize, NULL, &ret);
+  if (!matrixAMemObj || !matrixBMemObj || !matrixRMemObj) {
     printf("Error: Failed to allocate device memory!\n");
     exit(1);
   }
@@ -122,7 +133,7 @@ int main() {
   /* Set OpenCL Kernel Parameters */
   ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&matrixAMemObj);
   ret |= clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&matrixBMemObj);
-  ret |= clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&matrixResultMemObj);
+  ret |= clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&matrixRMemObj);
   ret |= clSetKernelArg(kernel, 3, sizeof(int), (void *)&wA);
   ret |= clSetKernelArg(kernel, 4, sizeof(int), (void *)&wB);
   if (ret != CL_SUCCESS) {
@@ -130,24 +141,84 @@ int main() {
     exit(1);
   }
 
-  /* Execute OpenCL Kernel */
+  /* Get max work item sizes */
+  size_t maxWorkGroupSize;
+  {
+    ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(maxWorkGroupSize), &maxWorkGroupSize, NULL);
+    if (ret != CL_SUCCESS) {
+      printf("Error: Failed to get workgroup_size %d\n", ret);
+      return EXIT_FAILURE;
+    }
+    printf("CL_DEVICE_MAX_WORK_GROUP_SIZE: %lu\n", maxWorkGroupSize);
+  }
+  size_t* maxLocalSizes;
+  {
+    cl_uint maxWorkItemDims;
+    ret = clGetDeviceInfo( device_id, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(cl_uint), &maxWorkItemDims, NULL);
+    if (ret != CL_SUCCESS) {
+      printf("Error: Failed to get work_item_dims %d\n", ret);
+      return EXIT_FAILURE;
+    }
+    maxLocalSizes = (size_t*)malloc(maxWorkItemDims * sizeof(size_t));
+
+    ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_ITEM_SIZES, maxWorkItemDims* sizeof(size_t), maxLocalSizes, NULL);
+    if (ret != CL_SUCCESS) {
+      printf("Error: Failed to get maxLocalSizes %d\n", ret);
+      return EXIT_FAILURE;
+    }
+    printf("work item sizes: ");
+    for (int i = 0; i< maxWorkItemDims; i++)
+      printf(" %ld", maxLocalSizes[i]);
+    printf("\n");
+  }
+
+  /* Decide work size */
   int workDim = 2;
   size_t globalWorkSize[workDim], localWorkSize[workDim];
-  globalWorkSize[0] = wA;
-  globalWorkSize[1] = wB;
-  localWorkSize[0] = wA < 16 ? wA : 16;
-  localWorkSize[1] = wB < 16 ? wB : 16;
+  globalWorkSize[0] = wR;
+  globalWorkSize[1] = hR;
+  size_t localWR = wR, localHR = hR;
+  while (maxLocalSizes[0] < localWR ||
+         maxLocalSizes[1] < localHR ||
+         localWR * localHR > maxWorkGroupSize) {
+    if (maxLocalSizes[0] < localWR) {
+      if (localWR % 2 != 0) {
+        printf("cannot set localWR(%ld) less than maxLocalSizes[0](%ld)", localWR, maxLocalSizes[0]);
+        return EXIT_FAILURE;
+      }
+      localWR /= 2;
+    } else if (maxLocalSizes[1] < localHR) {
+      if (localHR % 2 != 0) {
+        printf("cannot set localHR(%ld) less than maxLocalSizes[1](%ld)", localHR, maxLocalSizes[1]);
+        return EXIT_FAILURE;
+      }
+      localHR /= 2;
+    } else if (localWR > localHR && localWR % 2 == 0) {
+      localWR /= 2;
+    } else if (localHR % 2 == 0) {
+      localHR /= 2;
+    } else if (localWR % 2 == 0) {
+      localWR /= 2;
+    } else {
+      printf("cannot set local work size from %d and %d for maxWorkGroupSize(%ld)\n", wR, hR, maxWorkGroupSize);
+      return EXIT_FAILURE;
+    }
+  }
+  localWorkSize[0] = localWR;
+  localWorkSize[1] = localHR;
+  printf("localWR: %ld, localHR: %ld\n", localWR, localHR);
+
+  /* Execute OpenCL Kernel */
+  calc_start_t = clock();
   ret = clEnqueueNDRangeKernel(command_queue, kernel, workDim, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
+  calc_end_t = clock();
   if (ret != CL_SUCCESS) {
     printf("Error: Failed to execute kernel! %d\n", ret);
     exit(1);
   }
 
   /* Copy results from the memory buffer */
-  ret = clEnqueueReadBuffer(command_queue, matrixResultMemObj, CL_TRUE, 0, matrixMemSize, matrixResult, 0, NULL, NULL);
-
-  /* Display Result */
-  printMatrix(matrixResult, wA, wB);
+  ret = clEnqueueReadBuffer(command_queue, matrixRMemObj, CL_TRUE, 0, matrixRMemSize, matrixR, 0, NULL, NULL);
 
   /* Finalization */
   ret = clFlush(command_queue);
@@ -156,13 +227,27 @@ int main() {
   ret = clReleaseProgram(program);
   ret = clReleaseMemObject(matrixAMemObj);
   ret = clReleaseMemObject(matrixBMemObj);
-  ret = clReleaseMemObject(matrixResultMemObj);
+  ret = clReleaseMemObject(matrixRMemObj);
   ret = clReleaseCommandQueue(command_queue);
   ret = clReleaseContext(context);
 
+  end_t = clock();
+
+  /* Display Result */
+  if (wA <= 10) {
+    printMatrix(matrixR, wR, hR);
+  }
+
+  /* Show time */
+  double calc_t = (double) (calc_end_t - calc_start_t) / CLOCKS_PER_SEC;
+  double total_t = (double) (end_t - start_t) / CLOCKS_PER_SEC;
+  printf("Calc time: %f seconds\n", calc_t);
+  printf("Total time: %f seconds\n", total_t);
+
   free(matrixA);
   free(matrixB);
-  free(matrixResult);
+  free(matrixR);
+  free(maxLocalSizes);
 
   return 0;
 }
