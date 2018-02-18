@@ -30,24 +30,23 @@ int getMaxCommonFactorOf2Pow(int target) {
   return commonFactor;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
   clock_t start_t, calc_start_t, calc_end_t, end_t;
 
-  cl_device_id device_id = NULL;
-  cl_context context = NULL;
-  cl_command_queue command_queue = NULL;
-  cl_mem matrixAMemObj = NULL, matrixBMemObj = NULL, matrixRMemObj = NULL;
-  cl_program program = NULL;
-  cl_kernel kernel = NULL;
-  cl_platform_id platform_id = NULL;
-  cl_uint ret_num_devices;
-  cl_uint ret_num_platforms;
-  cl_int ret;
-
-  // const int dimLength = 10;
-  // const int wA = dimLength, hA = dimLength, wB = dimLength;
-  const int wA = 3, hA = 4, wB = 4;
-  int hB = wA, wR = wB, hR = hA;
+  const int wA, hA, wB;
+  if (argc == 1) {
+    wA = hA = wB = 10;
+  } else if (argc == 2) {
+    wA = hA = wB = atoi(argv[1]);
+  } else if (argc == 4) {
+    wA = atoi(argv[1]);
+    hA = atoi(argv[2]);
+    wB = atoi(argv[3]);
+  } else {
+    printf("No value or 1 or 3 values for wA, hA and wB are expected.\n");
+    return EXIT_FAILURE;
+  }
+  const int hB = wA, wR = wB, hR = hA;
   unsigned int matrixAMemSize = sizeof(float) * (unsigned int) (wA * hA);
   unsigned int matrixBMemSize = sizeof(float) * (unsigned int) (wB * hB);
   unsigned int matrixRMemSize = sizeof(float) * (unsigned int) (wR * hR);
@@ -80,6 +79,17 @@ int main() {
     printMatrix(matrixB, wB, hB);
   }
   start_t = clock();
+
+  cl_device_id device_id = NULL;
+  cl_context context = NULL;
+  cl_command_queue command_queue = NULL;
+  cl_mem matrixAMemObj = NULL, matrixBMemObj = NULL, matrixRMemObj = NULL;
+  cl_program program = NULL;
+  cl_kernel kernel = NULL;
+  cl_platform_id platform_id = NULL;
+  cl_uint ret_num_devices;
+  cl_uint ret_num_platforms;
+  cl_int ret;
 
   /* Get Platform and Device Info */
   ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
@@ -216,7 +226,7 @@ int main() {
   }
   localWorkSize[0] = localWR;
   localWorkSize[1] = localHR;
-  printf("localWR: %ld, localHR: %ld\n", localWR, localHR);
+  printf("localWorkSize: %ld, %ld\n", localWorkSize[0], localWorkSize[1]);
 
   /* Execute OpenCL Kernel */
   calc_start_t = clock();

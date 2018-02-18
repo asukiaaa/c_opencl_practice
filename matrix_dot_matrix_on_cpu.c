@@ -13,12 +13,23 @@ void printMatrix(float* matrix, int w, int h) {
   }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
   clock_t start_t, end_t;
-  // const int dimLength = 10;
-  // const int wA = dimLength, hA = dimLength, wB = dimLength;
-  const int wA = 3, hA = 4, wB = 4;
-  const int hB = wA, wR = wB, hR = hA;
+
+  const int wA, hA, wB;
+  if (argc == 1) {
+    wA = hA = wB = 10;
+  } else if (argc == 2) {
+    wA = hA = wB = atoi(argv[1]);
+  } else if (argc == 4) {
+    wA = atoi(argv[1]);
+    hA = atoi(argv[2]);
+    wB = atoi(argv[3]);
+  } else {
+    printf("No value or 1 or 3 values for wA, hA and wB are expected.\n");
+    return EXIT_FAILURE;
+  }
+  int hB = wA, wR = wB, hR = hA;
   unsigned int matrixAMemSize = sizeof(float) * wA * hA;
   unsigned int matrixBMemSize = sizeof(float) * wB * hB;
   unsigned int matrixRMemSize = sizeof(float) * wR * hR;
