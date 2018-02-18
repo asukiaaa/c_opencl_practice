@@ -221,7 +221,6 @@ int main() {
   /* Execute OpenCL Kernel */
   calc_start_t = clock();
   ret = clEnqueueNDRangeKernel(command_queue, kernel, workDim, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
-  calc_end_t = clock();
   if (ret != CL_SUCCESS) {
     printf("Error: Failed to execute kernel! %d\n", ret);
     exit(1);
@@ -229,6 +228,7 @@ int main() {
 
   /* Copy results from the memory buffer */
   ret = clEnqueueReadBuffer(command_queue, matrixRMemObj, CL_TRUE, 0, matrixRMemSize, matrixR, 0, NULL, NULL);
+  calc_end_t = clock();
 
   /* Finalization */
   ret = clFlush(command_queue);
