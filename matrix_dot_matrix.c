@@ -21,6 +21,15 @@ void printMatrix(float* matrix, int w, int h) {
   }
 }
 
+int getMaxCommonFactorOf2Pow(int target) {
+  int commonFactor = 1;
+  while (target % 2 == 0) {
+    target /= 2;
+    commonFactor *= 2;
+  }
+  return commonFactor;
+}
+
 int main() {
   clock_t start_t, calc_start_t, calc_end_t, end_t;
 
@@ -182,26 +191,27 @@ int main() {
          maxLocalSizes[1] < localHR ||
          localWR * localHR > maxWorkGroupSize) {
     if (maxLocalSizes[0] < localWR) {
-      if (localWR % 2 != 0) {
-        printf("cannot set localWR(%ld) less than maxLocalSizes[0](%ld)", localWR, maxLocalSizes[0]);
-        return EXIT_FAILURE;
+      if (localWR % 2 == 0) {
+        localWR /= 2;
+      } else {
+        localWR = getMaxCommonFactorOf2Pow(localWR);
       }
-      localWR /= 2;
     } else if (maxLocalSizes[1] < localHR) {
-      if (localHR % 2 != 0) {
-        printf("cannot set localHR(%ld) less than maxLocalSizes[1](%ld)", localHR, maxLocalSizes[1]);
-        return EXIT_FAILURE;
+      if (localWR % 2 == 0) {
+        localHR /= 2;
+      } else {
+        localHR = getMaxCommonFactorOf2Pow(localHR);
       }
-      localHR /= 2;
     } else if (localWR > localHR && localWR % 2 == 0) {
       localWR /= 2;
     } else if (localHR % 2 == 0) {
       localHR /= 2;
     } else if (localWR % 2 == 0) {
       localWR /= 2;
+    } else if (localHR != 1) {
+      localHR = getMaxCommonFactorOf2Pow(localHR);
     } else {
-      printf("cannot set local work size from %d and %d for maxWorkGroupSize(%ld)\n", wR, hR, maxWorkGroupSize);
-      return EXIT_FAILURE;
+      localWR = getMaxCommonFactorOf2Pow(localWR);
     }
   }
   localWorkSize[0] = localWR;
