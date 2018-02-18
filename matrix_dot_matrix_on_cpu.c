@@ -16,7 +16,7 @@ void printMatrix(float* matrix, int w, int h) {
 int main(int argc, char *argv[]) {
   clock_t start_t, end_t;
 
-  const int wA, hA, wB;
+  int wA, hA, wB;
   if (argc == 1) {
     wA = hA = wB = 10;
   } else if (argc == 2) {

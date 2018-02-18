@@ -33,7 +33,7 @@ int getMaxCommonFactorOf2Pow(int target) {
 int main(int argc, char *argv[]) {
   clock_t start_t, calc_start_t, calc_end_t, end_t;
 
-  const int wA, hA, wB;
+  int wA, hA, wB;
   if (argc == 1) {
     wA = hA = wB = 10;
   } else if (argc == 2) {
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     printf("No value or 1 or 3 values for wA, hA and wB are expected.\n");
     return EXIT_FAILURE;
   }
-  const int hB = wA, wR = wB, hR = hA;
+  int hB = wA, wR = wB, hR = hA;
   unsigned int matrixAMemSize = sizeof(float) * (unsigned int) (wA * hA);
   unsigned int matrixBMemSize = sizeof(float) * (unsigned int) (wB * hB);
   unsigned int matrixRMemSize = sizeof(float) * (unsigned int) (wR * hR);
