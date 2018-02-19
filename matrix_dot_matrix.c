@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
@@ -99,19 +100,25 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  /* Load the source code containing the kernel*/
-  FILE *fp;
-  char fileName[] = "./matrix_dot_matrix.cl";
-  char *source_str;
-  size_t source_size;
-  fp = fopen(fileName, "r");
-  if (!fp) {
-    fprintf(stderr, "Failed to load kernel.\n");
-    exit(1);
-  }
-  source_str = (char*)malloc(MAX_SOURCE_SIZE);
-  source_size = fread(source_str, 1, MAX_SOURCE_SIZE, fp);
-  fclose(fp);
+  /* Set source code of kernel*/
+  char *source_str =
+    "__kernel void matrix_dot_matrix( \
+       __global float *A, \
+       __global float *B, \
+       __global float *Result, \
+       int wA, \
+       int wB) { \
+       int tx = get_global_id(0); \
+       int ty = get_global_id(1); \
+       float value = 0; \
+       for (int k = 0; k < wA; ++k) { \
+         float elementA = A[ty * wA + k]; \
+         float elementB = B[k * wB + tx]; \
+         value += elementA * elementB; \
+       } \
+       Result[ty * wB + tx] = value; \
+     }";
+  size_t source_size = strlen(source_str);
 
   /* Create OpenCL context */
   context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
