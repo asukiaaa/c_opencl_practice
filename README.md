@@ -41,6 +41,7 @@ matrix_dot_matrix_on_cpu | 62.441596 seconds | 594.915341 seconds | Did not try
 matrix_dot_matrix (on GPU) | 18.725523 seconds | 203.470782 seconds | 4436.742463 seconds
 
 # References
+- [OpenCLで行列の掛け算をしてみた](http://asukiaaa.blogspot.jp/2018/02/opencl.html)
 - [3.3 First OpenCL Program](https://www.fixstars.com/en/opencl/book/OpenCLProgrammingBook/first-opencl-program/)
 - [How to compile OpenCL example in GCC?](https://forums.khronos.org/showthread.php/5728-How-to-compile-OpenCL-example-in-GCC)
 - [Matrix multiplication in OpenCL](http://www.es.ele.tue.nl/~mwijtvliet/5KK73/?page=mmopencl)
