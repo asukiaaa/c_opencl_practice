@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
     }
     printf("work item sizes: ");
-    for (int i = 0; i< maxWorkItemDims; i++)
+    for (i = 0; i< maxWorkItemDims; i++)
       printf(" %ld", maxLocalSizes[i]);
     printf("\n");
   }
