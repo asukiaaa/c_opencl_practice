@@ -94,6 +94,10 @@ int main(int argc, char *argv[]) {
 
   /* Get Platform and Device Info */
   ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
+  if (ret != CL_SUCCESS) {
+    printf("Error: Cannot get platform id!\n");
+    return EXIT_FAILURE;
+  }
   ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
   if (ret != CL_SUCCESS) {
     printf("Error: Failed to create a device group!\n");
