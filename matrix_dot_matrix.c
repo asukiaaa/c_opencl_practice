@@ -31,8 +31,12 @@ int getMaxCommonFactorOf2Pow(int target) {
   return commonFactor;
 }
 
+double getSeconds(clock_t from, clock_t till) {
+  return (double) (till - from) / CLOCKS_PER_SEC;
+}
+
 int main(int argc, char *argv[]) {
-  clock_t start_t, calc_start_t, calc_end_t, end_t;
+  clock_t start_t, loaded_device_t, set_kernel_t, set_memory_t, set_work_size_t, end_calc_t, end_t;
 
   int wA, hA, wB;
   if (argc == 1) {
@@ -103,6 +107,7 @@ int main(int argc, char *argv[]) {
     printf("Error: Failed to create a device group!\n");
     return EXIT_FAILURE;
   }
+  loaded_device_t = clock();
 
   /* Set source code of kernel*/
   char *source_str =
@@ -150,6 +155,7 @@ int main(int argc, char *argv[]) {
     printf("Error: Failed to create compute kernel!\n");
     exit(1);
   }
+  set_kernel_t = clock();
 
   /* Create Memory Buffer */
   matrixAMemObj = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, matrixAMemSize, matrixA, &ret);
@@ -170,6 +176,7 @@ int main(int argc, char *argv[]) {
     printf("Error: Failed to set kernel arguments! %d\n", ret);
     exit(1);
   }
+  set_memory_t = clock();
 
   /* Get max work item sizes */
   size_t maxWorkGroupSize;
@@ -238,9 +245,9 @@ int main(int argc, char *argv[]) {
   localWorkSize[0] = localWR;
   localWorkSize[1] = localHR;
   printf("localWorkSize: %ld, %ld\n", localWorkSize[0], localWorkSize[1]);
+  set_work_size_t = clock();
 
   /* Execute OpenCL Kernel */
-  calc_start_t = clock();
   ret = clEnqueueNDRangeKernel(command_queue, kernel, workDim, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
   if (ret != CL_SUCCESS) {
     printf("Error: Failed to execute kernel! %d\n", ret);
@@ -249,7 +256,7 @@ int main(int argc, char *argv[]) {
 
   /* Copy results from the memory buffer */
   ret = clEnqueueReadBuffer(command_queue, matrixRMemObj, CL_TRUE, 0, matrixRMemSize, matrixR, 0, NULL, NULL);
-  calc_end_t = clock();
+  end_calc_t = clock();
 
   /* Finalization */
   ret = clFlush(command_queue);
@@ -270,10 +277,13 @@ int main(int argc, char *argv[]) {
   }
 
   /* Show time */
-  double calc_t = (double) (calc_end_t - calc_start_t) / CLOCKS_PER_SEC;
-  double total_t = (double) (end_t - start_t) / CLOCKS_PER_SEC;
-  printf("Calc time: %f seconds\n", calc_t);
-  printf("Total time: %f seconds\n", total_t);
+  printf("Load device time: %f sec\n", getSeconds(start_t, loaded_device_t));
+  printf("Set kernel time: %f sec\n", getSeconds(loaded_device_t, set_kernel_t));
+  printf("Set memory time: %f sec\n", getSeconds(set_kernel_t, set_memory_t));
+  printf("Set work size time: %f sec\n", getSeconds(set_memory_t, set_work_size_t));
+  printf("Calc time: %f sec\n", getSeconds(set_work_size_t, end_calc_t));
+  printf("Release resource time: %f sec\n", getSeconds(end_calc_t, end_t));
+  printf("Total time: %f sec\n", getSeconds(start_t, end_t));
 
   free(matrixA);
   free(matrixB);
