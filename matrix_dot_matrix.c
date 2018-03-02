@@ -158,9 +158,9 @@ int main(int argc, char *argv[]) {
   set_kernel_t = clock();
 
   /* Create Memory Buffer */
-  matrixAMemObj = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, matrixAMemSize, matrixA, &ret);
-  matrixBMemObj = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, matrixBMemSize, matrixB, &ret);
-  matrixRMemObj = clCreateBuffer(context, CL_MEM_READ_WRITE, matrixRMemSize, NULL, &ret);
+  matrixAMemObj = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, matrixAMemSize, matrixA, &ret);
+  matrixBMemObj = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, matrixBMemSize, matrixB, &ret);
+  matrixRMemObj = clCreateBuffer(context, CL_MEM_WRITE_ONLY, matrixRMemSize, NULL, &ret);
   if (!matrixAMemObj || !matrixBMemObj || !matrixRMemObj) {
     printf("Error: Failed to allocate device memory!\n");
     exit(1);
