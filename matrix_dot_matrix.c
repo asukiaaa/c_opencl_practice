@@ -210,10 +210,6 @@ int main(int argc, char *argv[]) {
   }
 
   /* Decide work size */
-  int workDim = 2;
-  size_t globalWorkSize[workDim], localWorkSize[workDim];
-  globalWorkSize[0] = wR;
-  globalWorkSize[1] = hR;
   size_t localWR = wR, localHR = hR;
   while (maxLocalSizes[0] < localWR ||
          maxLocalSizes[1] < localHR ||
@@ -242,8 +238,9 @@ int main(int argc, char *argv[]) {
       localWR = getMaxCommonFactorOf2Pow(localWR);
     }
   }
-  localWorkSize[0] = localWR;
-  localWorkSize[1] = localHR;
+  int workDim = 1;
+  size_t globalWorkSize[] = {wR * hR};
+  size_t localWorkSize[] = {localWR};
   printf("localWorkSize: %ld, %ld\n", localWorkSize[0], localWorkSize[1]);
   set_work_size_t = clock();
 
