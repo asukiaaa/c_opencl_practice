@@ -253,6 +253,10 @@ int main(int argc, char *argv[]) {
 
   /* Copy results from the memory buffer */
   ret = clEnqueueReadBuffer(command_queue, matrixRMemObj, CL_TRUE, 0, matrixRMemSize, matrixR, 0, NULL, NULL);
+  if (ret != CL_SUCCESS) {
+    printf("Error: Failed to read output array! %d\n", ret);
+    exit(1);
+  }
   end_calc_t = clock();
 
   /* Finalization */
