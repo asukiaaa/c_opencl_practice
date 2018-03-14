@@ -117,9 +117,8 @@ int main(int argc, char *argv[]) {
        __global float* Result, \
        const int wA, \
        const int wB) { \
-       const int index = get_global_id(0); \
-       const int x = index % wB; \
-       const int y = index / wB; \
+       const int x = get_global_id(0); \
+       const int y = get_global_id(1); \
        float value = 0; \
        for (int i = 0; i < wA; ++i) { \
          int index_a = y * wA + i; \
@@ -128,7 +127,7 @@ int main(int argc, char *argv[]) {
          float elementB = B[index_b]; \
          value = value + elementA * elementB; \
        } \
-       Result[index] = value; \
+       Result[wB * y + x] = value; \
      }";
   size_t source_size = strlen(source_str);
 
@@ -229,21 +228,23 @@ int main(int argc, char *argv[]) {
       } else {
         localHR = getMaxCommonFactorOf2Pow(localHR);
       }
-    } else if (localWR > localHR && localWR % 2 == 0) {
-      localWR /= 2;
-    } else if (localHR % 2 == 0) {
-      localHR /= 2;
-    } else if (localWR % 2 == 0) {
-      localWR /= 2;
     } else if (localHR != 1) {
-      localHR = getMaxCommonFactorOf2Pow(localHR);
+      if (localHR % 2 == 0) {
+        localHR /= 2;
+      } else {
+        localHR = getMaxCommonFactorOf2Pow(localHR);
+      }
     } else {
-      localWR = getMaxCommonFactorOf2Pow(localWR);
+      if (localWR % 2 == 0) {
+        localWR /= 2;
+      } else {
+        localWR = getMaxCommonFactorOf2Pow(localWR);
+      }
     }
   }
-  int workDim = 1;
-  size_t globalWorkSize[] = {wR * hR};
-  size_t localWorkSize[] = {localWR};
+  int workDim = 2;
+  size_t globalWorkSize[] = {wR, hR};
+  size_t localWorkSize[] = {localWR, localHR};
   printf("localWorkSize: %ld, %ld\n", localWorkSize[0], localWorkSize[1]);
   set_work_size_t = clock();
 
