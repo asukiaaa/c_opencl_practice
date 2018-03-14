@@ -112,20 +112,23 @@ int main(int argc, char *argv[]) {
   /* Set source code of kernel*/
   char *source_str =
     "__kernel void matrix_dot_matrix( \
-       __global float *A, \
-       __global float *B, \
-       __global float *Result, \
-       int wA, \
-       int wB) { \
-       int tx = get_global_id(0); \
-       int ty = get_global_id(1); \
+       __global const float* A, \
+       __global const float* B, \
+       __global float* Result, \
+       const int wA, \
+       const int wB) { \
+       const int index = get_global_id(0); \
+       const int x = index % wB; \
+       const int y = index / wB; \
        float value = 0; \
-       for (int k = 0; k < wA; ++k) { \
-         float elementA = A[ty * wA + k]; \
-         float elementB = B[k * wB + tx]; \
-         value += elementA * elementB; \
+       for (int i = 0; i < wA; ++i) { \
+         int index_a = y * wA + i; \
+         int index_b = i * wB + x; \
+         float elementA = A[index_a]; \
+         float elementB = B[index_b]; \
+         value = value + elementA * elementB; \
        } \
-       Result[ty * wB + tx] = value; \
+       Result[index] = value; \
      }";
   size_t source_size = strlen(source_str);
 
