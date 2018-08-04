@@ -48,7 +48,11 @@ int main()
   context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
 
   /* Create Command Queue */
+  #ifdef CL_VERSION_2_0
   command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
+  #else
+  command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
+  #endif
 
   /* Create Memory Buffer */
   memobj = clCreateBuffer(context, CL_MEM_READ_WRITE,MEM_SIZE * sizeof(char), NULL, &ret);
