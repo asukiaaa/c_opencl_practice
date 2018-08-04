@@ -135,7 +135,11 @@ int main(int argc, char *argv[]) {
   context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
 
   /* Create Command Queue */
+  #ifdef CL_VERSION_2_0
   command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
+  #else
+  command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
+  #endif
 
   /* Create Kernel Program from the source */
   program = clCreateProgramWithSource(context, 1, (const char **)&source_str, (const size_t *)&source_size, &ret);
