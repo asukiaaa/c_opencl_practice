@@ -13,9 +13,14 @@ void printMatrix(float* matrix, int w, int h) {
   }
 }
 
-int main(int argc, char *argv[]) {
-  clock_t start_t, end_t;
+double getSeconds(clock_t from, clock_t till) {
+  return (double) (till - from) / CLOCKS_PER_SEC;
+}
 
+int main(int argc, char *argv[]) {
+  clock_t start_t, set_matrix_t, end_t;
+
+  start_t = clock();
   int wA, hA, wB;
   if (argc == 1) {
     wA = hA = wB = 10;
@@ -60,7 +65,7 @@ int main(int argc, char *argv[]) {
     printMatrix(matrixA, wA, hA);
     printMatrix(matrixB, wB, hB);
   }
-  start_t = clock();
+  set_matrix_t = clock();
 
   for (i = 0; i < wA; i++) {
     for (j = 0; j < wB; j++) {
@@ -78,8 +83,9 @@ int main(int argc, char *argv[]) {
   if (wA <= 10)
     printMatrix(matrixR, wR, hR);
 
-  double total_t = (double) (end_t - start_t) / CLOCKS_PER_SEC;
-  printf("Total time: %f seconds\n", total_t);
+  printf("Set matrix time: %f sec\n", getSeconds(start_t, set_matrix_t));
+  printf("Calc time: %f sec\n", getSeconds(set_matrix_t, end_t));
+  printf("Total time: %f seconds\n", getSeconds(start_t, end_t));
 
   free(matrixA);
   free(matrixB);

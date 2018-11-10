@@ -36,7 +36,8 @@ double getSeconds(clock_t from, clock_t till) {
 }
 
 int main(int argc, char *argv[]) {
-  clock_t start_t, loaded_device_t, set_kernel_t, set_memory_t, set_work_size_t, end_calc_t, end_t;
+  clock_t start_t, set_matrix_t, loaded_device_t, set_kernel_t, set_memory_t, set_work_size_t, end_calc_t, end_t;
+  start_t = clock();
 
   int wA, hA, wB;
   if (argc == 1) {
@@ -83,7 +84,7 @@ int main(int argc, char *argv[]) {
     printMatrix(matrixA, wA, hA);
     printMatrix(matrixB, wB, hB);
   }
-  start_t = clock();
+  set_matrix_t = clock();
 
   cl_device_id device_id = NULL;
   cl_context context = NULL;
@@ -282,7 +283,8 @@ int main(int argc, char *argv[]) {
   }
 
   /* Show time */
-  printf("Load device time: %f sec\n", getSeconds(start_t, loaded_device_t));
+  printf("Set matrix time: %f sec\n", getSeconds(start_t, set_matrix_t));
+  printf("Load device time: %f sec\n", getSeconds(set_matrix_t, loaded_device_t));
   printf("Set kernel time: %f sec\n", getSeconds(loaded_device_t, set_kernel_t));
   printf("Set memory time: %f sec\n", getSeconds(set_kernel_t, set_memory_t));
   printf("Set work size time: %f sec\n", getSeconds(set_memory_t, set_work_size_t));
